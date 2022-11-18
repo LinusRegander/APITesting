@@ -32,16 +32,75 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
     <script type="text/javascript">
-        function postUnicorn(unicorn) {
-            alert("Lägg till enhörning" + unicorn);
+
+        function postUnicorn() {
+            return function() {
+                var data = {};
+                data.name = $('#newUnicorn input[name=name]').val();
+                data.description = $('#newUnicorn textArea[name=description]').val();
+                data.reportedBy = $('#newUnicorn input[name=reportedBy]').val();
+                data.spottedWhere = {};
+                data.spottedWhere.name = $('#newUnicorn input[name="spottedWhere.name"]').val();
+                data.spottedWhere.lat = $('#newUnicorn input[name="spottedWhere.lat"]').val();
+                data.spottedWhere.lon = $('#newUnicorn input[name="spottedWhere.lon"]').val();
+                data.spottedWhen = $('#existingUnicorn input[name=spottedWhen]').val();
+
+                if (data.spottedWhen.length == 10) {
+                data.spottedWhen += ' 00:00:00';
+                }
+                data.image = $('#newUnicorn input[name=image]').val();
+
+                $.ajax({
+                    method: "POST",
+                    url: 'http://unicorns.idioti.se',
+                    data: JSON.stringify(data),
+                    headers: {"Accept": "application/json"}
+                })
+
+                .done(function(result) {
+                });
+            }
         }
 
         function putUnicorn(unicorn) {
-            alert("Ändra enhörning" + unicorn);
+            return function() {
+                var data = {};
+                data.name = $('#existingUnicorn input[name=id]').val();
+                data.description = $('#existingUnicorn textArea[name=description]').val();
+                data.reportedBy = $('#existingUnicorn input[name=reportedBy]').val();
+                data.spottedWhere = {};
+                data.spottedWhere.name = $('#existingUnicorn input[name="spottedWhere.name"]').val();
+                data.spottedWhere.lat = $('#existingUnicorn input[name="spottedWhere.lat"]').val();
+                data.spottedWhere.lon = $('#existingUnicorn input[name="spottedWhere.lon"]').val();
+                data.spottedWhen = $('#existingUnicorn input[name=spottedWhen]').val();
+
+                data.spottedWhen = $('#existingUnicorn input[name=spottedWhen]').val();
+                if (data.spottedWhen.length == 10) {
+                    data.spottedWhen += ' 00:00:00';
+                }
+                data.image = $('#existingUnicorn input[name=image]').val();
+
+                $.ajax({
+                    method: "PUT",
+                    url: 'http://unicorns.idioti.se' + data.id,
+                    data: JSON.stringify(data),
+                    headers: {"Accept": "application/json"}
+                })
+
+                .done(function(result) {
+                    console.log('Uppdaterade till följande data:');
+                    console.log(JSON.stringify(data));
+                });
+            }
         }
 
         function deleteUnicorn(unicorn) {
-            alert("Ta bort enhörning" + unicorn);
+            return function() {
+            $.ajax({
+                method: "DELETE",
+                url: 'http://unicorns.idioti.se/' + unicorn
+                });
+            }
         }
 
         function fetchAndUpdateInfo(details) {
@@ -60,6 +119,8 @@
                 $('#unicornInfo').text(data['description']);
                 $('#unicornSighting').text(sighting);
 
+                $('form').hide();
+
                 $('#existingUnicorn input[name=id]').val(data['id']);
                 $('#existingUnicorn input[name=name]').val(data['name']);
                 $('#existingUnicorn input[name=reportedBy]').val(data['reportedBy']);
@@ -74,12 +135,20 @@
                 $('#updaeUnicorn').unbind('click');
                 $('#deleteUnicorn').unbind('click');
 
-                $('#addUnicorn').click(postUnicorn(data['id']));
-                $('#updateUnicorn').click(putUnicorn(data['id']));
+                $('#addUnicorn').click(hideFormsAndShowOne('#newUnicorn'));
+                $('#updateUnicorn').click(hideFormsAndShowOne('#existingUnicorn'));
                 $('#deleteUnicorn').click(deleteUnicorn(data['id']));
                 });
             }
         }
+
+        function hideFormsAndShowOne(form) {
+            return function() {
+                $('form').hide();
+                $form.show(form);
+            }
+        }
+
         $(document).ready(function () {
         $.ajax({
             url: "http://unicorns.idioti.se",
@@ -96,13 +165,16 @@
         });
 
         $(".date").datepicker({ dateFormat: "yy-mm-dd" });
+
+        $('form').hide();
+        $('#postUnicorn').click(postUnicorn());
+        $('#putUnicorn').click(putUnicorn());
     });
     </script>
 </head>
 
 <body>
-    <h1>Wokehörning</h1>
-    <img src="fortnite_outfit_fabio_sparklemane.png" width="500px">
+    <h1>Enhörningar</h1>
     <table>
         <tr>
             <td id="list">
@@ -115,7 +187,7 @@
             <td id="info">
                 <h2>Information</h2>
                 <span id="picture"></span>
-                <p id="description">Wokehörningen är en sällsynt </p>
+                <p id="description"></p>
                 <p id="sightning"></p>
                 <button type="button" id="addUnicorn">Lägg till enhörning</button>
                 <button type="button" id="updateUnicorn">Ändra enhörning</button>
